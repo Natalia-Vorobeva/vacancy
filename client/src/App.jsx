@@ -7,6 +7,8 @@ import Loader from './components/Loader';
 
 function App() {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const abortControllers = useRef([]);
+
   const [vacancies, setVacancies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
@@ -38,18 +40,55 @@ function App() {
     const saved = localStorage.getItem('skillsCache');
     return saved ? JSON.parse(saved) : {};
   });
-  // Новое состояние
   const [applied, setApplied] = useState(() => {
     const saved = localStorage.getItem('applied');
     return saved ? JSON.parse(saved) : [];
   });
+  const [savedQueries, setSavedQueries] = useState(() => {
+    const saved = localStorage.getItem('savedQueries');
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  // Сохранение в localStorage
+  useEffect(() => {
+    if (!filters.query && savedQueries.length === 0) {
+      setFilters(prev => ({ ...prev, query: 'программист' }));
+    }
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('applied', JSON.stringify(applied));
   }, [applied]);
+  useEffect(() => {
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+  }, [favorites]);
+  useEffect(() => {
+    localStorage.setItem('hidden', JSON.stringify(hidden));
+  }, [hidden]);
+  useEffect(() => {
+    localStorage.setItem('ratings', JSON.stringify(ratings));
+  }, [ratings]);
+  useEffect(() => {
+    localStorage.setItem('skillsCache', JSON.stringify(skillsCache));
+  }, [skillsCache]);
+  useEffect(() => {
+    localStorage.setItem('savedQueries', JSON.stringify(savedQueries));
+  }, [savedQueries]);
 
-  // Функции
+  useEffect(() => {
+    return () => {
+      abortControllers.current.forEach(ctrl => ctrl.abort());
+    };
+  }, []);
+
+  const addSavedQuery = (query) => {
+    if (query.trim() && !savedQueries.includes(query.trim())) {
+      setSavedQueries([...savedQueries, query.trim()]);
+    }
+  };
+  const removeSavedQuery = (query) => {
+    setSavedQueries(savedQueries.filter(q => q !== query));
+  };
+
   const handleAppliedToggle = (vacancyId) => {
     setApplied(prev =>
       prev.includes(vacancyId)
@@ -58,24 +97,6 @@ function App() {
     );
   };
 
-  // Сохранение в localStorage
-  useEffect(() => {
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-  }, [favorites]);
-
-  useEffect(() => {
-    localStorage.setItem('hidden', JSON.stringify(hidden));
-  }, [hidden]);
-
-  useEffect(() => {
-    localStorage.setItem('ratings', JSON.stringify(ratings));
-  }, [ratings]);
-
-  useEffect(() => {
-    localStorage.setItem('skillsCache', JSON.stringify(skillsCache));
-  }, [skillsCache]);
-
-  // Функция загрузки одной страницы вакансий
   const loadPage = useCallback(async (pageNum, append = false) => {
     if (append) {
       setLoadingMore(true);
@@ -94,17 +115,21 @@ function App() {
       });
       const res = await fetch(`${API_URL}/api/vacancies?${params}`);
       const data = await res.json();
+
+      if (!Array.isArray(data)) {
+        console.error('API вернул не массив:', data);
+        setVacancies([]);
+        setHasMore(false);
+        return;
+      }
+
       if (append) {
         setVacancies(prev => [...prev, ...data]);
       } else {
         setVacancies(data);
       }
 
-      if (data.length < 100) {
-        setHasMore(false);
-      } else {
-        setHasMore(true);
-      }
+      setHasMore(data.length === 100);
     } catch (err) {
       console.error('Ошибка загрузки:', err);
     } finally {
@@ -114,21 +139,17 @@ function App() {
         setLoading(false);
       }
     }
-
   }, [filters]);
 
-  // Загрузка первой страницы при изменении фильтров
   useEffect(() => {
     setPage(0);
     setHasMore(true);
     loadPage(0, false);
-    // Очищаем кеш навыков, так как новый поиск – новые вакансии
     setSkillsCache({});
     localStorage.removeItem('skillsCache');
-    setShowFavorites(false)
+    setShowFavorites(false);
   }, [filters, loadPage]);
 
-  // Загрузка следующих страниц (кнопка "Загрузить ещё")
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
     const nextPage = page + 1;
@@ -136,33 +157,35 @@ function App() {
     await loadPage(nextPage, true);
   };
 
-  // Функция загрузки навыков для одной вакансии с кешированием
   const loadSkillsForVacancy = useCallback(async (vacancy) => {
-    // Если уже есть навыки в объекте вакансии – не загружаем
-    if (vacancy.all_skills) return;
+    const controller = new AbortController();
+    abortControllers.current.push(controller);
 
-    // Если уже загружаем – не дублируем
-    if (loadingSkills[vacancy.id]) return;
-
-    // Проверяем кеш
+    if (vacancy.all_skills) {
+      abortControllers.current = abortControllers.current.filter(c => c !== controller);
+      return;
+    }
+    if (loadingSkills[vacancy.id]) {
+      abortControllers.current = abortControllers.current.filter(c => c !== controller);
+      return;
+    }
     if (skillsCache[vacancy.id]) {
       setVacancies(prev =>
         prev.map(v =>
           v.id === vacancy.id ? { ...v, all_skills: skillsCache[vacancy.id] } : v
         )
       );
+      abortControllers.current = abortControllers.current.filter(c => c !== controller);
       return;
     }
 
     setLoadingSkills(prev => ({ ...prev, [vacancy.id]: true }));
     try {
-      const res = await fetch(`${API_URL}/api/vacancy/${vacancy.id}`);
+      const res = await fetch(`${API_URL}/api/vacancy/${vacancy.id}`, { signal: controller.signal });
       const details = await res.json();
       if (!details.error) {
         const skills = details.all_skills || [];
-        // Сохраняем в кеш
         setSkillsCache(prev => ({ ...prev, [vacancy.id]: skills }));
-        // Обновляем вакансию в списке
         setVacancies(prev =>
           prev.map(v =>
             v.id === vacancy.id ? { ...v, all_skills: skills } : v
@@ -172,13 +195,15 @@ function App() {
         console.warn(`Ошибка при получении навыков для ${vacancy.id}: ${details.error}`);
       }
     } catch (err) {
-      console.error(`Ошибка сети для вакансии ${vacancy.id}`, err);
+      if (err.name !== 'AbortError') {
+        console.error(`Ошибка сети для вакансии ${vacancy.id}`, err);
+      }
     } finally {
       setLoadingSkills(prev => ({ ...prev, [vacancy.id]: false }));
+      abortControllers.current = abortControllers.current.filter(c => c !== controller);
     }
   }, [skillsCache, loadingSkills]);
 
-  // Загружаем навыки для видимых вакансий (первые 20, не более 3 одновременно)
   useEffect(() => {
     const visible = vacancies.filter(v => !hidden.includes(v.id));
     const toLoad = visible
@@ -187,35 +212,36 @@ function App() {
 
     if (toLoad.length === 0) return;
 
-    // Загружаем по одному с задержкой, чтобы не перегружать сервер
     let i = 0;
+    let timerId = null;
+
     const loadNext = () => {
       if (i < toLoad.length) {
         loadSkillsForVacancy(toLoad[i]);
         i++;
-        setTimeout(loadNext, 200); // 200ms между запросами
+        timerId = setTimeout(loadNext, 200);
       }
     };
     loadNext();
+
+    return () => {
+      if (timerId) clearTimeout(timerId);
+    };
   }, [vacancies, hidden, loadingSkills, loadSkillsForVacancy]);
 
-  // Остальные функции (добавление/удаление из избранного, скрытие)
   const handleAddToFavorites = (vacancy) => {
     if (!favorites.some(fav => fav.id === vacancy.id)) {
       setFavorites([...favorites, vacancy]);
     }
   };
-
   const handleRemoveFromFavorites = (vacancyId) => {
     setFavorites(favorites.filter(fav => fav.id !== vacancyId));
   };
-
   const handleHideVacancy = (vacancyId) => {
     if (!hidden.includes(vacancyId)) {
       setHidden([...hidden, vacancyId]);
     }
   };
-
   const setRating = (vacancyId, rating) => {
     setRatings(prev => ({ ...prev, [vacancyId]: rating }));
   };
@@ -223,10 +249,17 @@ function App() {
   const visibleVacancies = vacancies.filter(vac => !hidden.includes(vac.id));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-100 py-8 px-4 ">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-100 py-8 px-4">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-center mb-8">Поиск работы</h1>
-        <SearchForm filters={filters} setFilters={setFilters} onSearch={() => { }} />
+        <SearchForm
+          filters={filters}
+          setFilters={setFilters}
+          onSearch={() => {}}
+          savedQueries={savedQueries}
+          addSavedQuery={addSavedQuery}
+          removeSavedQuery={removeSavedQuery}
+        />
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="lg:hidden mb-4">
             <button

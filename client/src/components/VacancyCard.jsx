@@ -91,7 +91,6 @@ const VacancyCard = ({ vacancy, isFavorite, onAddToFavorites, onRemoveFromFavori
 				)}
 			</div>
 
-			{/* Блок навыков */}
 			<div className="mt-3">
 				<div className="flex flex-wrap gap-1 mt-1">
 					{vacancy.all_skills && vacancy.all_skills.length > 0 && (

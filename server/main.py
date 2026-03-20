@@ -12,10 +12,10 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173",
+									 "https://vacancy-ten.vercel.app/"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -60,7 +60,7 @@ def fetch_from_hh(query: str, page: int = 0) -> List[dict]:
             logger.error(f"Ошибка при запросе страницы {page}: {e}")
         time.sleep(2)
     return []
-		
+
 def extract_skills_from_description(html_description: str) -> List[str]:
     """Извлекает навыки из HTML описания вакансии."""
     skill_keywords = [
@@ -87,12 +87,11 @@ def get_vacancies(
     remote_only: bool = Query(False, description="Только удаленка"),
     exclude_experience_above_3: bool = Query(True, description="Исключить опыт 3-6 и более"),
     days: Optional[int] = Query(7, description="Не старше N дней (0 — все)"),
-		page: int = Query(0, ge=0)
+    page: int = Query(0, ge=0)
 ):
-    """Возвращает вакансии по заданным фильтрам."""
-    raw_vacancies = fetch_from_hh(query, page)		
+    raw_vacancies = fetch_from_hh(query, page)
     filtered = []
-    cutoff_date = datetime.now(timezone.utc) - timedelta(days=days) if days and days > 0 else None	
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=days) if days and days > 0 else None
 
     for vac in raw_vacancies:
         if salary_only and not vac['salary']:
@@ -102,17 +101,14 @@ def get_vacancies(
         if exclude_experience_above_3 and vac['experience'] in ('between3And6', 'moreThan6'):
             continue
         if cutoff_date:
-            pub_date = datetime.fromisoformat(vac['published_at'].replace('Z', '+00:00'))
+            pub_date = datetime.fromisoformat(vac['published_at'].replace('Z', '+00:00')).replace(tzinfo=timezone.utc)
             if pub_date < cutoff_date:
                 continue
         filtered.append(vac)
-
     return filtered
-	
 
 @app.get("/api/vacancy/{vacancy_id}")
 def get_vacancy_details(vacancy_id: int):
-    """Получает полную информацию о вакансии, включая извлечённые из описания навыки и формат работы."""
     url = f"https://api.hh.ru/vacancies/{vacancy_id}"
     try:
         response = requests.get(url, timeout=15)

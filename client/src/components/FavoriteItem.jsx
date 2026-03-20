@@ -17,16 +17,6 @@ const FavoriteItem = ({ vacancy, onRemove, onClick, applied, onAppliedToggle }) 
         </button>
       </div>
       <div className="text-sm text-gray-500">{vacancy.company || 'Компания не указана'}</div>
-      {/* Чекбокс отклика */}
-      {/* <div className="mt-1 flex items-center" onClick={(e) => e.stopPropagation()}>
-        <input
-          type="checkbox"
-          checked={applied.includes(vacancy.id)}
-          onChange={() => onAppliedToggle(vacancy.id)}
-          className="w-4 h-4 mr-1"
-        />
-        <span className="text-xs text-gray-500">Отклик отправлен</span>
-      </div> */}
     </div>
   );
 };

@@ -31,28 +31,6 @@ const VacancyModal = ({ vacancyId, onClose, applied, onAppliedToggle }) => {
 
 	if (!vacancyId) return null;
 
-	// useEffect(() => {
-	// 	if (!vacancyId) return;
-	// 	setLoading(true);
-	// 	setError(null);
-	// 	fetch(`http://localhost:8000/api/vacancy/${vacancyId}`)
-	// 		.then(res => res.json())
-	// 		.then(data => {
-	// 			if (data.error) {
-	// 				setError(data.error);
-	// 			} else {
-	// 				setDetails(data);
-	// 			}
-	// 		})
-	// 		.catch(err => {
-	// 			console.error(err);
-	// 			setError('Не удалось загрузить данные');
-	// 		})
-	// 		.finally(() => setLoading(false));
-	// }, [vacancyId]);
-
-	// if (!vacancyId) return null;
-
 	const formatSalary = (salary) => {
 		if (!salary) return 'Не указана';
 		let text = '';
