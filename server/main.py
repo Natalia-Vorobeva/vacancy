@@ -6,16 +6,18 @@ from typing import List, Optional
 import time
 import logging
 from bs4 import BeautifulSoup
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+origins = os.getenv("ORIGINS", "http://localhost:5173").split(",")
+print(origins)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173",
-									 "https://vacancy-ten.vercel.app/"],
+    allow_origins=origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
