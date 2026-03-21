@@ -82,6 +82,10 @@ def detect_remote_from_description(html_description: str) -> bool:
     text = BeautifulSoup(html_description, 'lxml').get_text().lower()
     return 'удален' in text or 'remote' in text or 'дистанц' in text
 
+@app.get("/ping")
+def ping():
+    return {"status": "ok"}
+
 @app.get("/api/vacancies")
 def get_vacancies(
     query: str = Query("React разработчик", description="Поисковый запрос"),
