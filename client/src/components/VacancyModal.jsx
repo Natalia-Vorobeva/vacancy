@@ -112,12 +112,12 @@ const VacancyModal = ({ vacancyId, onClose, applied, onAppliedToggle }) => {
 							</label>
 						</div>
 
-						<div className="flex justify-between mt-4">
+						<div className="flex flex-col sm:flex-row justify-between gap-3 mt-4">
 							<a
 								href={details.alternate_url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+								className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-center"
 							>
 								Перейти к вакансии на HH
 							</a>

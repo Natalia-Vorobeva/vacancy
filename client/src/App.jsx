@@ -255,13 +255,13 @@ function App() {
         <SearchForm
           filters={filters}
           setFilters={setFilters}
-          onSearch={() => {}}
+          onSearch={() => { }}
           savedQueries={savedQueries}
           addSavedQuery={addSavedQuery}
           removeSavedQuery={removeSavedQuery}
         />
         <div className="flex flex-col lg:flex-row gap-6">
-          <div className="lg:hidden mb-4">
+          <div className="lg:hidden mb-4 sticky top-0 z-10">
             <button
               onClick={() => setShowFavorites(!showFavorites)}
               className="w-full bg-sky-500 text-white py-2 rounded focus:outline-none"
