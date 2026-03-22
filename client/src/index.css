@@ -147,3 +147,15 @@ body {
 .modal-icon.favorite:hover {
   background-color: #fde047;
 }
+@keyframes float {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-float {
+  animation: float 2s ease-in-out infinite;
+}

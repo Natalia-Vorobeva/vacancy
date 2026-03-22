@@ -89,24 +89,46 @@ def get_vacancies(
     remote_only: bool = Query(False, description="Только удаленка"),
     exclude_experience_above_3: bool = Query(True, description="Исключить опыт 3-6 и более"),
     days: Optional[int] = Query(7, description="Не старше N дней (0 — все)"),
-    page: int = Query(0, ge=0)
+    page: int = Query(0, ge=0),
+    exclude_agency: bool = Query(False, description="Исключить кадровые агентства"),
+    exclude_title_words: Optional[str] = Query(None, description="Слова для исключения из названия (через запятую)"),
 ):
     raw_vacancies = fetch_from_hh(query, page)
     filtered = []
     cutoff_date = datetime.now(timezone.utc) - timedelta(days=days) if days and days > 0 else None
 
+    # Разбор слов для исключения
+    exclude_words = []
+    if exclude_title_words:
+        exclude_words = [w.strip().lower() for w in exclude_title_words.split(',') if w.strip()]
+    
     for vac in raw_vacancies:
+        # Фильтр по зарплате
         if salary_only and not vac['salary']:
             continue
+        # Фильтр по удалёнке
         if remote_only and vac['schedule'] != 'remote':
             continue
+        # Фильтр по опыту
         if exclude_experience_above_3 and vac['experience'] in ('between3And6', 'moreThan6'):
             continue
+        # Фильтр по дате
         if cutoff_date:
             pub_date = datetime.fromisoformat(vac['published_at'].replace('Z', '+00:00')).replace(tzinfo=timezone.utc)
             if pub_date < cutoff_date:
                 continue
+        # Фильтр по кадровым агентствам
+        if exclude_agency and vac.get('company') and ('кадровое агентство' in vac['company'].lower() or 'hr' in vac['company'].lower()):
+            continue
+
+        # Фильтр по словам в названии
+        if exclude_words:
+            title_lower = vac['name'].lower()
+            if any(word in title_lower for word in exclude_words):
+                continue
+
         filtered.append(vac)
+
     return filtered
 
 @app.get("/api/vacancy/{vacancy_id}")
