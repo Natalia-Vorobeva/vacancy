@@ -1,10 +1,9 @@
 import FavoriteItem from './FavoriteItem';
-import VacancyCard from './VacancyCard';
 
-const FavoritesList = ({ favorites, onRemoveFromFavorites, onSelectVacancy, applied, onAppliedToggle }) => {
+const FavoritesList = ({ favorites, onRemoveFromFavorites, onSelectVacancy, applied, onAppliedToggle, ratings }) => {
   if (favorites.length === 0) {
     return (
-      <div className="bg-white p-4 rounded-lg shadow-md">
+      <div className="bg-white p-4 rounded shadow-md">
         <h2 className="text-xl font-semibold mb-4">Избранное</h2>
         <p className="text-gray-500 text-center">Нет избранных вакансий</p>
       </div>
@@ -12,7 +11,7 @@ const FavoritesList = ({ favorites, onRemoveFromFavorites, onSelectVacancy, appl
   }
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
+    <div className="bg-white p-4 rounded shadow-md vacancy-card-image-fav">
       <h2 className="text-xl font-semibold mb-4">Избранное</h2>
       <div className="space-y-3 max-h-[80vh] overflow-y-auto">
         {favorites.map((vac) => (
@@ -23,6 +22,7 @@ const FavoritesList = ({ favorites, onRemoveFromFavorites, onSelectVacancy, appl
             onClick={onSelectVacancy}
             applied={applied}
             onAppliedToggle={onAppliedToggle}
+            ratings={ratings}
           />
         ))}
       </div>

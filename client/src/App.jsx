@@ -18,6 +18,7 @@ function App() {
     excludeExperienceAbove3: true,
     days: 7,
   });
+  
   const [loadingSkills, setLoadingSkills] = useState({});
   const [showFavorites, setShowFavorites] = useState(false);
   const [favorites, setFavorites] = useState(() => {
@@ -249,10 +250,14 @@ function App() {
   const visibleVacancies = vacancies.filter(vac => !hidden.includes(vac.id));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-100 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-200 to-slate-300 py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">Поиск работы</h1>
-        <SearchForm
+<h1 className="text-3xl font-bold text-center mb-8 relative inline-block w-full text-white">
+  ПОИСК РАБОТЫ
+  <span className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-34 h-1 bg-white rounded-full"></span>
+</h1>   
+
+ <SearchForm
           filters={filters}
           setFilters={setFilters}
           onSearch={() => { }}
@@ -264,7 +269,7 @@ function App() {
           <div className="lg:hidden mb-4 sticky top-0 z-10">
             <button
               onClick={() => setShowFavorites(!showFavorites)}
-              className="w-full bg-sky-500 text-white py-2 rounded focus:outline-none"
+              className="w-full bg-indigo-400 text-white py-2 rounded focus:outline-none"
             >
               {showFavorites ? 'Вернуться к списку' : 'Показать избранное'}
             </button>
@@ -277,6 +282,7 @@ function App() {
                 onAppliedToggle={handleAppliedToggle}
                 onRemoveFromFavorites={handleRemoveFromFavorites}
                 onSelectVacancy={setSelectedVacancyId}
+                ratings={ratings} 
               />
             ) : (
               <>
@@ -318,6 +324,7 @@ function App() {
               onAppliedToggle={handleAppliedToggle}
               onRemoveFromFavorites={handleRemoveFromFavorites}
               onSelectVacancy={setSelectedVacancyId}
+              ratings={ratings}
             />
           </div>
         </div>
