@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; overscroll-behavior: contain;
+  font-family: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 * {
   scrollbar-width: thin;
@@ -16,7 +16,7 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #6366f1;
 }
-/* трек можно оставить светлым */
+
 ::-webkit-scrollbar-track {
   background: #e0e7ff;
 }
@@ -27,13 +27,12 @@ body {
   gap: 0.5rem;
   padding: 0.25rem 0.5rem;
   background: #ffffff;
-  border-left: 3px solid #eab308; /* зелёный для зарплаты */
+  border-left: 3px solid #eab308; 
   border-top-left-radius: 0.5rem;
-  /* box-shadow: 0 1px 2px rgba(0,0,0,0.05); */
   font-size: 0.875rem;
 }
 .chip-border-left.remote {
-  border-left-color: #91e1f0; /* фиолетовый для удалёнки */
+  border-left-color: #91e1f0; 
 }
 
 .vacancy-card {
@@ -42,41 +41,6 @@ body {
   background-color: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(2px);
 }
-/* input[type="checkbox"] {
-  accent-color: #faf9fc; 
-  width: 1rem;
-  height: 1rem;
-  cursor: pointer;
-} */
-
-.box {
-background: white;
-  border-radius: .5rem;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1);
-  border: 1px solid #f1f5f9;
-}
-
-/* .vacancy-card::before {
-  content: "";
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  width: 48px;
-  height: 48px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%234A5B6E' rx='6'/%3E%3Ccircle cx='13' cy='13' r='6' fill='none' stroke='white' stroke-width='1.5'/%3E%3Cpath d='M18 18 L23 23' stroke='white' stroke-width='1.5' fill='none'/%3E%3Crect x='20' y='8' width='6' height='3' fill='white' rx='1'/%3E%3Crect x='20' y='12' width='6' height='2' fill='white' rx='1'/%3E%3Crect x='20' y='15' width='6' height='2' fill='white' rx='1'/%3E%3C/svg%3E");
-  background-size: contain;
-  background-repeat: no-repeat;
-  opacity: 0.1;
-  transition: opacity 0.2s;
-  pointer-events: none;
-}
-
-.vacancy-card--favorite::before {
-  opacity: 0.8;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-} */
 
 .vacancy-card-image-fav {
   position: relative;
@@ -117,13 +81,6 @@ background: white;
   pointer-events: none;
 }
 
-/* убираем лишние отступы, которые могли появиться от родительских элементов */
-.vacancy-card .modal-trigger {
-  margin: 0;
-  padding: 0;
-  line-height: 1;
-}
-
 .custom-checkbox {
   appearance: none;
   -webkit-appearance: none;
@@ -140,7 +97,7 @@ background: white;
 }
 
 .custom-checkbox:checked {
-  background: white; /* фон не меняется */
+  background: white; 
   border-color: #dedee4; 
   border: .5px solid rgb(247, 240, 240);
 }

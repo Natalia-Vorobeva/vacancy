@@ -1,7 +1,7 @@
 // eslint-disable react-hooks/exhaustive-deps
 import { useEffect, useState, useCallback } from 'react';
 
-const VacancyModal = ({ vacancyId, onClose, applied, onAppliedToggle }) => {
+const VacancyModal = ({ vacancyId, onClose, applied, onAppliedToggle, favorites, onAddToFavorites, onRemoveFromFavorites }) => {
 	const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 	const [details, setDetails] = useState(null);
 	const [loading, setLoading] = useState(false);
@@ -30,6 +30,17 @@ const VacancyModal = ({ vacancyId, onClose, applied, onAppliedToggle }) => {
 	}, [loadDetails]);
 
 	if (!vacancyId) return null;
+
+	const isFavorite = favorites.some(fav => fav.id === vacancyId.id);
+
+	const handleFavoriteToggle = (e) => {
+		e.stopPropagation();
+		if (isFavorite) {
+			onRemoveFromFavorites(vacancyId.id);
+		} else {
+			onAddToFavorites(vacancyId);
+		}
+	};
 
 	const formatSalary = (salary) => {
 		if (!salary) return 'Не указана';
@@ -63,6 +74,15 @@ const VacancyModal = ({ vacancyId, onClose, applied, onAppliedToggle }) => {
 				)}
 				{details && !loading && !error && (
 					<>
+						<div className="flex justify-between items-center">
+							<h2 className="text-2xl font-bold">{vacancyId.name}</h2>
+							<button
+								onClick={handleFavoriteToggle}
+								className={`text-2xl focus:outline-none ${isFavorite ? 'text-yellow-500' : 'text-gray-400'}`}
+							>
+								{isFavorite ? '★' : '☆'}
+							</button>
+						</div>
 						<h2 className="text-2xl font-bold mb-2">{details.name}</h2>
 						<p className="text-gray-600 mb-2">{details.company || 'Компания не указана'}</p>
 						<div className="flex flex-wrap gap-2 mb-4">

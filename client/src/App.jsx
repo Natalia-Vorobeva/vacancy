@@ -16,9 +16,10 @@ function App() {
     salaryOnly: false,
     remoteOnly: true,
     excludeExperienceAbove3: true,
-    days: 7,
+    days: 3,
+    excludeAgency: true,
   });
-  
+
   const [loadingSkills, setLoadingSkills] = useState({});
   const [showFavorites, setShowFavorites] = useState(false);
   const [favorites, setFavorites] = useState(() => {
@@ -113,6 +114,7 @@ function App() {
         exclude_experience_above_3: filters.excludeExperienceAbove3,
         days: filters.days,
         page: pageNum,
+        exclude_agency: filters.excludeAgency,
       });
       const res = await fetch(`${API_URL}/api/vacancies?${params}`);
       const data = await res.json();
@@ -251,82 +253,91 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-200 to-slate-300 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-<h1 className="text-3xl font-bold text-center mb-8 relative inline-block w-full text-white">
-  ПОИСК РАБОТЫ
-  <span className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-34 h-1 bg-white rounded-full"></span>
-</h1>   
+      <div className="max-w-7xl mx-auto relative">
+        <div className="relative z-10">
+          <h1 className="text-3xl font-bold text-center mb-8 relative inline-block w-full text-white">
+            ПОИСК РАБОТЫ
+            <span className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-34 h-1 bg-white rounded-full"></span>
+          </h1>
 
- <SearchForm
-          filters={filters}
-          setFilters={setFilters}
-          onSearch={() => { }}
-          savedQueries={savedQueries}
-          addSavedQuery={addSavedQuery}
-          removeSavedQuery={removeSavedQuery}
-        />
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="lg:hidden mb-4 sticky top-0 z-10">
-            <button
-              onClick={() => setShowFavorites(!showFavorites)}
-              className="w-full bg-indigo-400 text-white py-2 rounded focus:outline-none"
-            >
-              {showFavorites ? 'Вернуться к списку' : 'Показать избранное'}
-            </button>
-          </div>
-          <div className="lg:w-2/3">
-            {showFavorites ? (
+          <SearchForm
+            filters={filters}
+            setFilters={setFilters}
+            onSearch={() => { }}
+            savedQueries={savedQueries}
+            addSavedQuery={addSavedQuery}
+            removeSavedQuery={removeSavedQuery}
+          />
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="lg:hidden mb-4 sticky top-0 z-10">
+              <button
+                onClick={() => setShowFavorites(!showFavorites)}
+                className="w-full bg-indigo-400 text-white py-2 rounded focus:outline-none"
+              >
+                {showFavorites ? 'Вернуться к списку' : 'Показать избранное'}
+              </button>
+            </div>
+            <div className="lg:w-2/3">
+              {showFavorites ? (
+                <FavoritesList
+                  favorites={favorites}
+                  applied={applied}
+                  onAppliedToggle={handleAppliedToggle}
+                  onRemoveFromFavorites={handleRemoveFromFavorites}
+                  onSelectVacancy={setSelectedVacancyId}
+                  ratings={ratings}
+                />
+              ) : (
+                <>
+                  <VacancyList
+                    vacancies={visibleVacancies}
+                    loading={loading}
+                    loadingSkills={loadingSkills}
+                    favorites={favorites}
+                    ratings={ratings}
+                    setRating={setRating}
+                    onAddToFavorites={handleAddToFavorites}
+                    onRemoveFromFavorites={handleRemoveFromFavorites}
+                    onHide={handleHideVacancy}
+                    onSelectVacancy={setSelectedVacancyId}
+                    applied={applied}
+                    onAppliedToggle={handleAppliedToggle}
+                  />
+                  {hasMore && !loading && (
+                    <div className="text-center mt-4">
+                      {loadingMore ? (
+                        <Loader />
+                      ) : (
+                        <button
+                          onClick={loadMore}
+                          className="bg-sky-500 text-white px-4 py-2 rounded focus:outline-none"
+                        >
+                          Загрузить ещё
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="lg:w-1/3 hidden lg:block">
               <FavoritesList
                 favorites={favorites}
                 applied={applied}
                 onAppliedToggle={handleAppliedToggle}
                 onRemoveFromFavorites={handleRemoveFromFavorites}
                 onSelectVacancy={setSelectedVacancyId}
-                ratings={ratings} 
+                ratings={ratings}
               />
-            ) : (
-              <>
-                <VacancyList
-                  vacancies={visibleVacancies}
-                  loading={loading}
-                  loadingSkills={loadingSkills}
-                  favorites={favorites}
-                  ratings={ratings}
-                  setRating={setRating}
-                  onAddToFavorites={handleAddToFavorites}
-                  onRemoveFromFavorites={handleRemoveFromFavorites}
-                  onHide={handleHideVacancy}
-                  onSelectVacancy={setSelectedVacancyId}
-                  applied={applied}
-                  onAppliedToggle={handleAppliedToggle}
-                />
-                {hasMore && !loading && (
-                  <div className="text-center mt-4">
-                    {loadingMore ? (
-                      <Loader />
-                    ) : (
-                      <button
-                        onClick={loadMore}
-                        className="bg-sky-500 text-white px-4 py-2 rounded focus:outline-none"
-                      >
-                        Загрузить ещё
-                      </button>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
+            </div>
           </div>
-          <div className="lg:w-1/3 hidden lg:block">
-            <FavoritesList
-              favorites={favorites}
-              applied={applied}
-              onAppliedToggle={handleAppliedToggle}
-              onRemoveFromFavorites={handleRemoveFromFavorites}
-              onSelectVacancy={setSelectedVacancyId}
-              ratings={ratings}
-            />
-          </div>
+
+        </div>
+
+        <div className="fixed bottom-[3%] right-0 w-1/3 h-1/3 pointer-events-none hidden lg:block z-0">
+          <svg className="w-full h-full" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 0 L200 0 M0 20 L200 20 M0 40 L200 40 M0 60 L200 60 M0 80 L200 80 M0 100 L200 100 M0 120 L200 120 M0 140 L200 140 M0 160 L200 160 M0 180 L200 180 M0 200 L200 200 M0 0 L0 200 M20 0 L20 200 M40 0 L40 200 M60 0 L60 200 M80 0 L80 200 M100 0 L100 200 M120 0 L120 200 M140 0 L140 200 M160 0 L160 200 M180 0 L180 200 M200 0 L200 200" stroke="#94a3b8" strokeWidth="0.5" opacity="0.3" />
+          </svg>
         </div>
       </div>
       <VacancyModal
@@ -334,6 +345,9 @@ function App() {
         onClose={() => setSelectedVacancyId(null)}
         applied={applied}
         onAppliedToggle={handleAppliedToggle}
+        favorites={favorites}
+        onAddToFavorites={handleAddToFavorites}
+        onRemoveFromFavorites={handleRemoveFromFavorites}
       />
     </div>
   );
