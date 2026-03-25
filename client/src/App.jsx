@@ -297,11 +297,9 @@ function App() {
                   applied={applied}
                   onAppliedToggle={handleAppliedToggle}
                 />
-                {hasMore && !loading && (
+                {hasMore && !loading && vacancies.length > 0 && (
                   <div className="text-center mt-4">
-                    {loadingMore ? (
-                      <Loader />
-                    ) : (
+                    {loadingMore ? <Loader /> : (
                       <button
                         onClick={loadMore}
                         className="bg-indigo-600 text-white px-4 py-2 rounded focus:outline-none"
