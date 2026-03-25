@@ -7,10 +7,8 @@ import Loader from './components/Loader';
 
 function App() {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-  const abortControllers = useRef([]);
   const searchFormRef = useRef(null);
 
-  // --- Состояния ---
   const [vacancies, setVacancies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -18,19 +16,17 @@ function App() {
   const [hasMore, setHasMore] = useState(true);
   const [showFavorites, setShowFavorites] = useState(false);
 
-  // Фильтры (чекбоксы, дни)
   const [filters, setFilters] = useState(() => {
     const saved = localStorage.getItem('filters');
     return saved ? JSON.parse(saved) : {
       salaryOnly: false,
       remoteOnly: true,
       excludeExperienceAbove3: true,
-      days: 7,
+      days: 3,
       excludeAgency: true,
     };
   });
 
-  // Поисковые строки
   const [query, setQuery] = useState(() => {
     return localStorage.getItem('query') || 'React разработчик';
   });
@@ -38,13 +34,11 @@ function App() {
     return localStorage.getItem('excludeTitleWords') || '';
   });
 
-  // Сохранённые запросы
   const [savedQueries, setSavedQueries] = useState(() => {
     const saved = localStorage.getItem('savedQueries');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Избранное, скрытые, рейтинги, отклики, кэш навыков
   const [favorites, setFavorites] = useState(() => {
     const saved = localStorage.getItem('favorites');
     return saved ? JSON.parse(saved) : [];
@@ -69,7 +63,6 @@ function App() {
   const [selectedVacancyId, setSelectedVacancyId] = useState(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
-  // --- Сохранение состояния в localStorage ---
   useEffect(() => {
     localStorage.setItem('filters', JSON.stringify(filters));
   }, [filters]);
@@ -98,7 +91,6 @@ function App() {
     localStorage.setItem('savedQueries', JSON.stringify(savedQueries));
   }, [savedQueries]);
 
-  // --- Восстановление прокрутки после загрузки ---
   useEffect(() => {
     const savedScroll = localStorage.getItem('scrollPosition');
     if (savedScroll) {
@@ -107,7 +99,6 @@ function App() {
     }
   }, []);
 
-  // --- Сохранение позиции прокрутки перед уходом со страницы ---
   useEffect(() => {
     const handleBeforeUnload = () => {
       localStorage.setItem('scrollPosition', window.scrollY);
@@ -116,7 +107,6 @@ function App() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
-  // --- Отслеживание прокрутки для кнопки "К поиску" ---
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollButton(window.scrollY > 300);
@@ -125,7 +115,6 @@ function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // --- Блокировка прокрутки при открытом модальном окне ---
   useEffect(() => {
     if (selectedVacancyId) {
       document.body.style.overflow = 'hidden';
@@ -137,14 +126,12 @@ function App() {
     };
   }, [selectedVacancyId]);
 
-  // --- Функция прокрутки к форме поиска ---
   const scrollToSearch = () => {
     if (searchFormRef.current) {
       searchFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
-  // --- Работа с сохранёнными запросами ---
   const addSavedQuery = (newQuery) => {
     if (newQuery.trim() && !savedQueries.includes(newQuery.trim())) {
       setSavedQueries([...savedQueries, newQuery.trim()]);
@@ -154,7 +141,6 @@ function App() {
     setSavedQueries(savedQueries.filter(q => q !== queryToRemove));
   };
 
-  // --- Загрузка вакансий ---
   const loadPage = useCallback(async (pageNum, append = false, overrideQuery = query, overrideExclude = excludeTitleWords) => {
     if (append) setLoadingMore(true);
     else setLoading(true);
@@ -195,7 +181,6 @@ function App() {
     }
   }, [filters, query, excludeTitleWords]);
 
-  // --- Авто-поиск при изменении фильтров ---
   useEffect(() => {
     setPage(0);
     setHasMore(true);
@@ -205,7 +190,6 @@ function App() {
     setShowFavorites(false);
   }, [filters]);
 
-  // --- Ручной поиск (по кнопке или выбору сохранённого запроса) ---
   const handleSearch = (newQuery, newExcludeWords) => {
     setQuery(newQuery);
     setExcludeTitleWords(newExcludeWords);
@@ -215,7 +199,6 @@ function App() {
     setShowFavorites(false);
   };
 
-  // --- Загрузка следующих страниц ---
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
     const nextPage = page + 1;
@@ -223,7 +206,6 @@ function App() {
     await loadPage(nextPage, true);
   };
 
-  // --- Избранное ---
   const handleAddToFavorites = (vacancy) => {
     if (!favorites.some(fav => fav.id === vacancy.id)) {
       setFavorites([...favorites, vacancy]);
@@ -233,19 +215,16 @@ function App() {
     setFavorites(favorites.filter(fav => fav.id !== vacancyId));
   };
 
-  // --- Скрытие ---
   const handleHideVacancy = (vacancyId) => {
     if (!hidden.includes(vacancyId)) {
       setHidden([...hidden, vacancyId]);
     }
   };
 
-  // --- Оценка ---
   const setRating = (vacancyId, rating) => {
     setRatings(prev => ({ ...prev, [vacancyId]: rating }));
   };
 
-  // --- Отклик ---
   const handleAppliedToggle = (vacancyId) => {
     setApplied(prev =>
       prev.includes(vacancyId)
@@ -359,7 +338,6 @@ function App() {
         onRemoveFromFavorites={handleRemoveFromFavorites}
       />
 
-      {/* Кнопка "К поиску" */}
       {showScrollButton && (
         <button
           onClick={scrollToSearch}
