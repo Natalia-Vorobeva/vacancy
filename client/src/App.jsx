@@ -190,14 +190,28 @@ function App() {
     setShowFavorites(false);
   }, [filters]);
 
-  const handleSearch = (newQuery, newExcludeWords) => {
-    setQuery(newQuery);
-    setExcludeTitleWords(newExcludeWords);
-    setPage(0);
-    setHasMore(true);
-    loadPage(0, false, newQuery, newExcludeWords);
-    setShowFavorites(false);
-  };
+ const handleSearch = async (newQuery, newExcludeWords) => {
+  setQuery(newQuery);
+  setExcludeTitleWords(newExcludeWords);
+  setPage(0);
+  setHasMore(true);
+  await loadPage(0, false, newQuery, newExcludeWords);
+  setShowFavorites(false);
+
+  setTimeout(() => {
+    const target = document.querySelector('.vacancy-card-image') || document.querySelector('.no-results-message');
+    if (target) {
+      const elementRect = target.getBoundingClientRect();
+      const absoluteElementTop = elementRect.top + window.pageYOffset;
+      const stickyButton = document.querySelector('.lg\\:hidden.sticky.top-0');
+      const offset = stickyButton ? stickyButton.getBoundingClientRect().height + 16 : 16;
+      window.scrollTo({
+        top: absoluteElementTop - offset,
+        behavior: 'smooth'
+      });
+    }
+  }, 100);
+};
 
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;

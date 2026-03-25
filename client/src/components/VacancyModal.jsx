@@ -60,12 +60,11 @@ const VacancyModal = ({ vacancyId, onClose, applied, onAppliedToggle, favorites,
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col relative">
-        {/* Шапка с кнопками */}
-        <div className="sticky top-0 bg-white rounded-t-lg border-b border-gray-200 px-4 py-3 flex justify-end gap-3 z-10">
+      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col relative pb-8">        
+        <div className="sticky rounded-lg top-0 bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200 z-10">
           <button
             onClick={handleFavoriteToggle}
-            className={`focus:outline-none text-xl flex items-center gap-1 ${
+            className={`focus:outline-none text-xs flex items-center gap-1 ${
               isFavorite ? 'text-yellow-500' : 'text-gray-500'
             }`}
           >
@@ -81,14 +80,24 @@ const VacancyModal = ({ vacancyId, onClose, applied, onAppliedToggle, favorites,
         </div>
 
         {/* Прокручиваемый контент */}
-        <div className="p-6 pt-0 overflow-auto">
+        <div className="p-4 pt-0 overflow-auto">
           {loading && <div className="text-center py-8">Загрузка...</div>}
           {error && (
             <div className="text-center py-8">
-              <p className="text-red-500 mb-2">Ошибка: {error}</p>
+              <div className="mb-4">
+                <svg className="mx-auto h-12 w-12 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <p className="text-gray-700 mb-2">
+                Не удалось загрузить детали вакансии
+              </p>
+              <p className="text-sm text-gray-500 mb-4">
+                Проверьте подключение к интернету и попробуйте снова
+              </p>
               <button
                 onClick={() => setRetryCount(c => c + 1)}
-                className="bg-blue-500 text-white px-4 py-2 rounded focus:outline-none"
+                className="bg-blue-500 text-white px-4 py-2 rounded focus:outline-none hover:bg-blue-600"
               >
                 Повторить
               </button>
@@ -163,7 +172,7 @@ const VacancyModal = ({ vacancyId, onClose, applied, onAppliedToggle, favorites,
         </div>
       </div>
     </div>
-  );
+  );  
 };
 
 export default VacancyModal;
