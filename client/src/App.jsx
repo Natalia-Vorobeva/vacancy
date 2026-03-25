@@ -8,8 +8,9 @@ import Loader from './components/Loader';
 function App() {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
   const abortControllers = useRef([]);
+  const searchFormRef = useRef(null);
 
-  // --- Состояния для вакансий и UI ---
+  // --- Состояния ---
   const [vacancies, setVacancies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -17,26 +18,33 @@ function App() {
   const [hasMore, setHasMore] = useState(true);
   const [showFavorites, setShowFavorites] = useState(false);
 
-  // --- Фильтры, которые работают автоматически (чекбоксы, дни) ---
-  const [filters, setFilters] = useState({
-    salaryOnly: false,
-    remoteOnly: true,
-    excludeExperienceAbove3: true,
-    days: 7,
-    excludeAgency: true,   // новый фильтр
+  // Фильтры (чекбоксы, дни)
+  const [filters, setFilters] = useState(() => {
+    const saved = localStorage.getItem('filters');
+    return saved ? JSON.parse(saved) : {
+      salaryOnly: false,
+      remoteOnly: true,
+      excludeExperienceAbove3: true,
+      days: 7,
+      excludeAgency: true,
+    };
   });
 
-  // --- Поисковые строки, которые отправляются только по кнопке ---
-  const [query, setQuery] = useState('React разработчик');
-  const [excludeTitleWords, setExcludeTitleWords] = useState('');
+  // Поисковые строки
+  const [query, setQuery] = useState(() => {
+    return localStorage.getItem('query') || 'React разработчик';
+  });
+  const [excludeTitleWords, setExcludeTitleWords] = useState(() => {
+    return localStorage.getItem('excludeTitleWords') || '';
+  });
 
-  // --- Сохранённые запросы ---
+  // Сохранённые запросы
   const [savedQueries, setSavedQueries] = useState(() => {
     const saved = localStorage.getItem('savedQueries');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // --- Избранное, скрытые, рейтинги, отклики, кэш навыков ---
+  // Избранное, скрытые, рейтинги, отклики, кэш навыков
   const [favorites, setFavorites] = useState(() => {
     const saved = localStorage.getItem('favorites');
     return saved ? JSON.parse(saved) : [];
@@ -59,8 +67,18 @@ function App() {
   });
   const [loadingSkills, setLoadingSkills] = useState({});
   const [selectedVacancyId, setSelectedVacancyId] = useState(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
-  // --- localStorage синхронизация ---
+  // --- Сохранение состояния в localStorage ---
+  useEffect(() => {
+    localStorage.setItem('filters', JSON.stringify(filters));
+  }, [filters]);
+  useEffect(() => {
+    localStorage.setItem('query', query);
+  }, [query]);
+  useEffect(() => {
+    localStorage.setItem('excludeTitleWords', excludeTitleWords);
+  }, [excludeTitleWords]);
   useEffect(() => {
     localStorage.setItem('favorites', JSON.stringify(favorites));
   }, [favorites]);
@@ -80,6 +98,52 @@ function App() {
     localStorage.setItem('savedQueries', JSON.stringify(savedQueries));
   }, [savedQueries]);
 
+  // --- Восстановление прокрутки после загрузки ---
+  useEffect(() => {
+    const savedScroll = localStorage.getItem('scrollPosition');
+    if (savedScroll) {
+      window.scrollTo(0, parseInt(savedScroll));
+      localStorage.removeItem('scrollPosition');
+    }
+  }, []);
+
+  // --- Сохранение позиции прокрутки перед уходом со страницы ---
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.setItem('scrollPosition', window.scrollY);
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  // --- Отслеживание прокрутки для кнопки "К поиску" ---
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollButton(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // --- Блокировка прокрутки при открытом модальном окне ---
+  useEffect(() => {
+    if (selectedVacancyId) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedVacancyId]);
+
+  // --- Функция прокрутки к форме поиска ---
+  const scrollToSearch = () => {
+    if (searchFormRef.current) {
+      searchFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   // --- Работа с сохранёнными запросами ---
   const addSavedQuery = (newQuery) => {
     if (newQuery.trim() && !savedQueries.includes(newQuery.trim())) {
@@ -90,7 +154,7 @@ function App() {
     setSavedQueries(savedQueries.filter(q => q !== queryToRemove));
   };
 
-  // --- Функция загрузки вакансий (универсальная) ---
+  // --- Загрузка вакансий ---
   const loadPage = useCallback(async (pageNum, append = false, overrideQuery = query, overrideExclude = excludeTitleWords) => {
     if (append) setLoadingMore(true);
     else setLoading(true);
@@ -131,7 +195,7 @@ function App() {
     }
   }, [filters, query, excludeTitleWords]);
 
-  // --- Авто-поиск при изменении фильтров (чекбоксы, дни) ---
+  // --- Авто-поиск при изменении фильтров ---
   useEffect(() => {
     setPage(0);
     setHasMore(true);
@@ -139,9 +203,9 @@ function App() {
     setSkillsCache({});
     localStorage.removeItem('skillsCache');
     setShowFavorites(false);
-  }, [filters]); // только filters, query и excludeTitleWords берутся текущие
+  }, [filters]);
 
-  // --- Ручной поиск (при нажатии «Найти», выборе сохранённого запроса) ---
+  // --- Ручной поиск (по кнопке или выбору сохранённого запроса) ---
   const handleSearch = (newQuery, newExcludeWords) => {
     setQuery(newQuery);
     setExcludeTitleWords(newExcludeWords);
@@ -159,7 +223,7 @@ function App() {
     await loadPage(nextPage, true);
   };
 
-  // --- Управление избранным ---
+  // --- Избранное ---
   const handleAddToFavorites = (vacancy) => {
     if (!favorites.some(fav => fav.id === vacancy.id)) {
       setFavorites([...favorites, vacancy]);
@@ -169,14 +233,14 @@ function App() {
     setFavorites(favorites.filter(fav => fav.id !== vacancyId));
   };
 
-  // --- Скрытие вакансии ---
+  // --- Скрытие ---
   const handleHideVacancy = (vacancyId) => {
     if (!hidden.includes(vacancyId)) {
       setHidden([...hidden, vacancyId]);
     }
   };
 
-  // --- Оценка вакансии ---
+  // --- Оценка ---
   const setRating = (vacancyId, rating) => {
     setRatings(prev => ({ ...prev, [vacancyId]: rating }));
   };
@@ -190,9 +254,6 @@ function App() {
     );
   };
 
-  // --- Логика подгрузки навыков (остаётся без изменений, только использует vacancy.all_skills) ---
-  // ... (здесь ваш существующий код загрузки навыков, он не меняется)
-
   const visibleVacancies = vacancies.filter(vac => !hidden.includes(vac.id));
 
   return (
@@ -202,26 +263,26 @@ function App() {
           <svg className="w-8 h-8 text-slate-500 animate-float" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          <h1 className="text-4xl text-center font-bold text-slate-700 inline-block relative">
-
+          <h1 className="text-3xl md:text-4xl text-center font-bold text-slate-700 inline-block relative whitespace-nowrap">
             Поиск работы
             <span className="absolute bottom-0 left-0 w-16 h-1 bg-amber-500 rounded-full"></span>
           </h1>
         </div>
 
-        <SearchForm
-          filters={filters}
-          setFilters={setFilters}
-          onSearch={handleSearch}
-          savedQueries={savedQueries}
-          addSavedQuery={addSavedQuery}
-          removeSavedQuery={removeSavedQuery}
-          initialQuery={query}
-          initialExcludeWords={excludeTitleWords}
-        />
+        <div ref={searchFormRef}>
+          <SearchForm
+            filters={filters}
+            setFilters={setFilters}
+            onSearch={handleSearch}
+            savedQueries={savedQueries}
+            addSavedQuery={addSavedQuery}
+            removeSavedQuery={removeSavedQuery}
+            initialQuery={query}
+            initialExcludeWords={excludeTitleWords}
+          />
+        </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Мобильная кнопка переключения */}
           <div className="lg:hidden mb-4 sticky top-0 z-10">
             <button
               onClick={() => setShowFavorites(!showFavorites)}
@@ -298,7 +359,19 @@ function App() {
         onRemoveFromFavorites={handleRemoveFromFavorites}
       />
 
-      {/* Декоративный узор (сетка) – позади всего контента */}
+      {/* Кнопка "К поиску" */}
+      {showScrollButton && (
+        <button
+          onClick={scrollToSearch}
+          className="fixed bottom-6 right-6 bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700 transition-all z-20 focus:outline-none"
+          aria-label="К поиску"
+        >
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+      )}
+
       <div className="fixed bottom-0 right-0 w-1/4 h-1/4 pointer-events-none hidden md:block z-0">
         <svg className="w-full h-full" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M0 0 L200 0 M0 20 L200 20 M0 40 L200 40 M0 60 L200 60 M0 80 L200 80 M0 100 L200 100 M0 120 L200 120 M0 140 L200 140 M0 160 L200 160 M0 180 L200 180 M0 200 L200 200 M0 0 L0 200 M20 0 L20 200 M40 0 L40 200 M60 0 L60 200 M80 0 L80 200 M100 0 L100 200 M120 0 L120 200 M140 0 L140 200 M160 0 L160 200 M180 0 L180 200 M200 0 L200 200" stroke="#94a3b8" strokeWidth="0.5" opacity="0.3" />
