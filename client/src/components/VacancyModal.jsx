@@ -60,13 +60,12 @@ const VacancyModal = ({ vacancyId, onClose, applied, onAppliedToggle, favorites,
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4 pb-8 pt-8" onClick={onClose}>
-      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col relative">        
+      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col relative">
         <div className="sticky rounded-lg top-0 bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200 z-10">
           <button
             onClick={handleFavoriteToggle}
-            className={`focus:outline-none text-xs flex items-center gap-1 ${
-              isFavorite ? 'text-yellow-500' : 'text-gray-500'
-            }`}
+            className={`focus:outline-none text-xs flex items-center gap-1 ${isFavorite ? 'text-yellow-500' : 'text-gray-500'
+              }`}
           >
             {isFavorite ? '★ В избранном' : '☆ В избранное'}
           </button>
@@ -172,7 +171,7 @@ const VacancyModal = ({ vacancyId, onClose, applied, onAppliedToggle, favorites,
         </div>
       </div>
     </div>
-  );  
+  );
 };
 
 export default VacancyModal;
