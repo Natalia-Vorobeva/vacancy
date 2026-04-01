@@ -7,9 +7,9 @@ const Pagination = ({
   onLoadMore,
   hasMore = false,
   loadingMore = false,
-  variant = 'default', // 'default', 'minimal', 'rounded', 'icons', 'animated'
+  variant = 'default', 
 }) => {
-  // Генерация номеров страниц с многоточиями
+  
   const getPageNumbers = () => {
     const delta = 2;
     const range = [];
@@ -29,7 +29,6 @@ const Pagination = ({
 
   const pageNumbers = getPageNumbers();
 
-  // Функция для получения классов кнопок в зависимости от варианта
   const getButtonClasses = (num, isCurrent = false, isArrow = false) => {
     const base = 'px-3 py-1 rounded transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
     
@@ -66,7 +65,6 @@ const Pagination = ({
     return base;
   };
 
-  // Стрелки для варианта с иконками
   const PrevArrow = () => (
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />

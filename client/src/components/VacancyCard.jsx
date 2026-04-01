@@ -49,7 +49,7 @@ const VacancyCard = ({
   };
 
   const isApplied = applied.includes(vacancy.id);
-  console.log('%cDATA', 'color: purple', vacancy.remote, 'vacancy.schedule')
+  
   return (
     <div
       className={`vacancy-card-image bg-white rounded-lg shadow p-4 hover:shadow-md transition cursor-pointer ${isFavorite ? 'vacancy-card--favorite' : ''}`}

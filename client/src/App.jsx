@@ -26,7 +26,7 @@ function App() {
       excludeExperienceAbove3: false,
       days: 0,
       excludeAgency: false,
-      area: 2, // Санкт-Петербург по умолчанию
+      area: 2, 
     };
   });
 
@@ -66,11 +66,9 @@ function App() {
   const [selectedVacancyId, setSelectedVacancyId] = useState(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
-  // Пагинация
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  // Сохранение в localStorage
   useEffect(() => {
     localStorage.setItem('filters', JSON.stringify(filters));
   }, [filters]);
@@ -99,7 +97,6 @@ function App() {
     localStorage.setItem('savedQueries', JSON.stringify(savedQueries));
   }, [savedQueries]);
 
-  // Восстановление скролла
   useEffect(() => {
     const savedScroll = localStorage.getItem('scrollPosition');
     if (savedScroll) {
@@ -108,7 +105,6 @@ function App() {
     }
   }, []);
 
-  // Сохранение скролла перед закрытием
   useEffect(() => {
     const handleBeforeUnload = () => {
       localStorage.setItem('scrollPosition', window.scrollY);
@@ -117,7 +113,6 @@ function App() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
-  // Кнопка прокрутки вверх
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollButton(window.scrollY > 300);
@@ -126,7 +121,6 @@ function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Блокировка скролла при открытом модальном окне
   useEffect(() => {
     if (selectedVacancyId) {
       document.body.style.overflow = 'hidden';
@@ -138,7 +132,6 @@ function App() {
     };
   }, [selectedVacancyId]);
 
-  // Загрузка регионов
   useEffect(() => {
     const loadRegions = async () => {
       try {
@@ -174,7 +167,6 @@ function App() {
     setSavedQueries(savedQueries.filter(q => q !== queryToRemove));
   };
 
-  // Загрузка вакансий
   const loadPage = useCallback(async (pageNum, append = false, overrideQuery = query, overrideExclude = excludeTitleWords) => {
     if (append) setLoadingMore(true);
     else setLoading(true);
@@ -205,7 +197,6 @@ function App() {
         return;
       }
 
-      // Больше никакой клиентской фильтрации – бэкенд возвращает уже отфильтрованные данные
       if (append) {
         setVacancies(prev => [...prev, ...data]);
       } else {
@@ -221,7 +212,6 @@ function App() {
     }
   }, [filters, query, excludeTitleWords]);
 
-  // Первоначальная загрузка при изменении фильтров
   useEffect(() => {
     setPage(0);
     setHasMore(true);
@@ -263,7 +253,6 @@ function App() {
     await loadPage(nextPage, true);
   };
 
-  // Логика избранного и скрытых вакансий
   const handleAddToFavorites = (vacancy) => {
     if (!favorites.some(fav => fav.id === vacancy.id)) {
       setFavorites([...favorites, vacancy]);
@@ -294,20 +283,6 @@ function App() {
   const visibleVacancies = Array.isArray(vacancies) ? vacancies.filter(vac => !hidden.includes(vac.id)) : [];
   const totalPages = Math.ceil(visibleVacancies.length / ITEMS_PER_PAGE);
   const displayedVacancies = visibleVacancies.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-
-  // Пагинация: создаём массив страниц, ограниченный (например, показываем до 5 кнопок вокруг текущей)
-  const getPageNumbers = () => {
-    const delta = 2;
-    const range = [];
-    for (let i = 1; i <= totalPages; i++) {
-      if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
-        range.push(i);
-      } else if (range[range.length - 1] !== '...') {
-        range.push('...');
-      }
-    }
-    return range;
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-200 to-slate-300 py-8 px-4">
@@ -381,7 +356,7 @@ function App() {
                     onLoadMore={loadMore}
                     hasMore={hasMore}
                     loadingMore={loadingMore}
-                    variant="default"   // можно менять на 'minimal', 'rounded', 'icons', 'animated'
+                    variant="default" 
                   />
                 )}
               </>

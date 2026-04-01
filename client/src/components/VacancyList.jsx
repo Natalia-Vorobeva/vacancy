@@ -2,7 +2,7 @@ import Loader from './Loader';
 import VacancyCard from './VacancyCard';
 
 const VacancyList = ({ vacancies = [], loading, favorites, onAddToFavorites, onRemoveFromFavorites, onHide, onSelectVacancy, isLoading, ratings, setRating, applied, onAppliedToggle, isRemoteFilterActive }) => {
-	console.log('VacancyList render, vacancies length:', vacancies.length, 'loading:', loading);
+
 	if (loading) return <Loader />;
 	if (vacancies.length === 0) return <div className="text-center py-10">Вакансии не найдены. Попробуйте изменить фильтры.</div>;
 
