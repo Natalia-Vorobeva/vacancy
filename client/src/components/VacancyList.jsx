@@ -1,17 +1,13 @@
 import Loader from './Loader';
 import VacancyCard from './VacancyCard';
 
-const VacancyList = ({ vacancies, loading, favorites, onAddToFavorites, onRemoveFromFavorites, onHide, onSelectVacancy, isLoading, ratings, setRating, applied, onAppliedToggle }) => {
-	if (loading) {
-		return <Loader/>;
-	}
-
-	if (vacancies.length === 0) {
-		return <div className="text-center py-10">Вакансии не найдены. Попробуйте изменить фильтры.</div>;
-	}
+const VacancyList = ({ vacancies = [], loading, favorites, onAddToFavorites, onRemoveFromFavorites, onHide, onSelectVacancy, isLoading, ratings, setRating, applied, onAppliedToggle, isRemoteFilterActive }) => {
+	console.log('VacancyList render, vacancies length:', vacancies.length, 'loading:', loading);
+	if (loading) return <Loader />;
+	if (vacancies.length === 0) return <div className="text-center py-10">Вакансии не найдены. Попробуйте изменить фильтры.</div>;
 
 	return (
-		<div className="space-y-4">
+		<div className="space-y-4 mb-4">
 			{vacancies.map((vac, idx) => (
 				<VacancyCard
 					key={vac.id}
@@ -27,6 +23,7 @@ const VacancyList = ({ vacancies, loading, favorites, onAddToFavorites, onRemove
 					onClick={() => onSelectVacancy(vac.id)}
 					applied={applied}
 					onAppliedToggle={onAppliedToggle}
+					isRemoteFilterActive={isRemoteFilterActive}
 				/>
 			))}
 		</div>

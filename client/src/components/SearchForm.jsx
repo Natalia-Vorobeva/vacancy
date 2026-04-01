@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import RegionSelect from './RegionSelect';
 
 const SearchForm = ({
   filters,
@@ -8,7 +9,9 @@ const SearchForm = ({
   addSavedQuery,
   removeSavedQuery,
   initialQuery,
-  initialExcludeWords
+  initialExcludeWords,
+  regions,
+  onLoadRegions,
 }) => {
   const [localQuery, setLocalQuery] = useState(initialQuery);
   const [localExcludeWords, setLocalExcludeWords] = useState(initialExcludeWords);
@@ -99,7 +102,8 @@ const SearchForm = ({
       </style>
 
       <form onSubmit={handleSubmit}>
-        <div className="flex flex-col md:flex-row gap-4 mb-4 relative">
+        {/* <div className="flex flex-col md:flex-row gap-4 mb-4 relative">*/}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
           <div ref={containerRef} className="flex-1 relative">
             <div className="relative">
               <input
@@ -196,6 +200,17 @@ const SearchForm = ({
               className="w-full sm:flex-1 border border-gray-300 rounded p-1.5 focus:ring-2 focus:ring-indigo-300 focus:border-transparent"
             />
           </div>
+          {!filters.remoteOnly && (
+          <div className="col-span-1 md:col-span-2 lg:col-span-1">
+            <div className="text-gray-700 mb-1 text-sm">Регион</div>
+            <RegionSelect
+              regions={regions}
+              value={filters.area}
+              onChange={(areaId) => setFilters({ ...filters, area: areaId })}
+              disabled={filters.remoteOnly}
+            />
+          </div>
+        )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
@@ -204,7 +219,12 @@ const SearchForm = ({
             <span className="text-gray-700">Только с указанной ЗП</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
-            <input className="custom-checkbox" type="checkbox" checked={filters.remoteOnly} onChange={(e) => setFilters({ ...filters, remoteOnly: e.target.checked })} />
+            <input
+              type="checkbox"
+              className="custom-checkbox"
+              checked={filters.remoteOnly}
+              onChange={(e) => setFilters({ ...filters, remoteOnly: e.target.checked })}
+            />
             <span className="text-gray-700">Удаленная работа</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">

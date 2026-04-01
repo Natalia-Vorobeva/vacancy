@@ -4,6 +4,7 @@ import VacancyList from './components/VacancyList';
 import FavoritesList from './components/FavoritesList';
 import VacancyModal from './components/VacancyModal';
 import Loader from './components/Loader';
+import Pagination from './components/Pagination';
 
 function App() {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -15,15 +16,17 @@ function App() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [showFavorites, setShowFavorites] = useState(false);
+  const [regions, setRegions] = useState([]);
 
   const [filters, setFilters] = useState(() => {
     const saved = localStorage.getItem('filters');
     return saved ? JSON.parse(saved) : {
       salaryOnly: false,
-      remoteOnly: true,
-      excludeExperienceAbove3: true,
-      days: 3,
-      excludeAgency: true,
+      remoteOnly: false,
+      excludeExperienceAbove3: false,
+      days: 0,
+      excludeAgency: false,
+      area: 2, // Санкт-Петербург по умолчанию
     };
   });
 
@@ -63,6 +66,11 @@ function App() {
   const [selectedVacancyId, setSelectedVacancyId] = useState(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
+  // Пагинация
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  // Сохранение в localStorage
   useEffect(() => {
     localStorage.setItem('filters', JSON.stringify(filters));
   }, [filters]);
@@ -91,6 +99,7 @@ function App() {
     localStorage.setItem('savedQueries', JSON.stringify(savedQueries));
   }, [savedQueries]);
 
+  // Восстановление скролла
   useEffect(() => {
     const savedScroll = localStorage.getItem('scrollPosition');
     if (savedScroll) {
@@ -99,6 +108,7 @@ function App() {
     }
   }, []);
 
+  // Сохранение скролла перед закрытием
   useEffect(() => {
     const handleBeforeUnload = () => {
       localStorage.setItem('scrollPosition', window.scrollY);
@@ -107,6 +117,7 @@ function App() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
+  // Кнопка прокрутки вверх
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollButton(window.scrollY > 300);
@@ -115,6 +126,7 @@ function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Блокировка скролла при открытом модальном окне
   useEffect(() => {
     if (selectedVacancyId) {
       document.body.style.overflow = 'hidden';
@@ -125,6 +137,27 @@ function App() {
       document.body.style.overflow = '';
     };
   }, [selectedVacancyId]);
+
+  // Загрузка регионов
+  useEffect(() => {
+    const loadRegions = async () => {
+      try {
+        const response = await fetch('https://api.hh.ru/areas');
+        const data = await response.json();
+        const russia = data.find(item => item.id === '113');
+        if (russia && russia.areas) {
+          const regionList = russia.areas.map(area => ({ id: parseInt(area.id), name: area.name }));
+          setRegions(regionList);
+        } else {
+          setRegions([]);
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки регионов:', err);
+        setRegions([]);
+      }
+    };
+    loadRegions();
+  }, []);
 
   const scrollToSearch = () => {
     if (searchFormRef.current) {
@@ -141,6 +174,7 @@ function App() {
     setSavedQueries(savedQueries.filter(q => q !== queryToRemove));
   };
 
+  // Загрузка вакансий
   const loadPage = useCallback(async (pageNum, append = false, overrideQuery = query, overrideExclude = excludeTitleWords) => {
     if (append) setLoadingMore(true);
     else setLoading(true);
@@ -149,13 +183,18 @@ function App() {
       const params = new URLSearchParams({
         query: overrideQuery,
         salary_only: filters.salaryOnly,
-        remote_only: filters.remoteOnly,
+        remote_only: filters.remoteOnly,  // ← теперь передаём
         exclude_experience_above_3: filters.excludeExperienceAbove3,
         days: filters.days,
         page: pageNum,
         exclude_agency: filters.excludeAgency,
         exclude_title_words: overrideExclude,
       });
+
+      if (!filters.remoteOnly && filters.area !== null && filters.area !== undefined) {
+        params.append('area', filters.area);
+      }
+
       const res = await fetch(`${API_URL}/api/vacancies?${params}`);
       const data = await res.json();
 
@@ -166,6 +205,7 @@ function App() {
         return;
       }
 
+      // Больше никакой клиентской фильтрации – бэкенд возвращает уже отфильтрованные данные
       if (append) {
         setVacancies(prev => [...prev, ...data]);
       } else {
@@ -181,37 +221,40 @@ function App() {
     }
   }, [filters, query, excludeTitleWords]);
 
+  // Первоначальная загрузка при изменении фильтров
   useEffect(() => {
     setPage(0);
     setHasMore(true);
+    setCurrentPage(1);
     loadPage(0, false, query, excludeTitleWords);
     setSkillsCache({});
     localStorage.removeItem('skillsCache');
     setShowFavorites(false);
   }, [filters]);
 
- const handleSearch = async (newQuery, newExcludeWords) => {
-  setQuery(newQuery);
-  setExcludeTitleWords(newExcludeWords);
-  setPage(0);
-  setHasMore(true);
-  await loadPage(0, false, newQuery, newExcludeWords);
-  setShowFavorites(false);
+  const handleSearch = async (newQuery, newExcludeWords) => {
+    setQuery(newQuery);
+    setExcludeTitleWords(newExcludeWords);
+    setPage(0);
+    setHasMore(true);
+    setCurrentPage(1);
+    await loadPage(0, false, newQuery, newExcludeWords);
+    setShowFavorites(false);
 
-  setTimeout(() => {
-    const target = document.querySelector('.vacancy-card-image') || document.querySelector('.no-results-message');
-    if (target) {
-      const elementRect = target.getBoundingClientRect();
-      const absoluteElementTop = elementRect.top + window.pageYOffset;
-      const stickyButton = document.querySelector('.lg\\:hidden.sticky.top-0');
-      const offset = stickyButton ? stickyButton.getBoundingClientRect().height + 16 : 16;
-      window.scrollTo({
-        top: absoluteElementTop - offset,
-        behavior: 'smooth'
-      });
-    }
-  }, 100);
-};
+    setTimeout(() => {
+      const target = document.querySelector('.vacancy-card-image') || document.querySelector('.no-results-message');
+      if (target) {
+        const elementRect = target.getBoundingClientRect();
+        const absoluteElementTop = elementRect.top + window.pageYOffset;
+        const stickyButton = document.querySelector('.lg\\:hidden.sticky.top-0');
+        const offset = stickyButton ? stickyButton.getBoundingClientRect().height + 16 : 16;
+        window.scrollTo({
+          top: absoluteElementTop - offset,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
+  };
 
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
@@ -220,6 +263,7 @@ function App() {
     await loadPage(nextPage, true);
   };
 
+  // Логика избранного и скрытых вакансий
   const handleAddToFavorites = (vacancy) => {
     if (!favorites.some(fav => fav.id === vacancy.id)) {
       setFavorites([...favorites, vacancy]);
@@ -247,7 +291,23 @@ function App() {
     );
   };
 
-  const visibleVacancies = vacancies.filter(vac => !hidden.includes(vac.id));
+  const visibleVacancies = Array.isArray(vacancies) ? vacancies.filter(vac => !hidden.includes(vac.id)) : [];
+  const totalPages = Math.ceil(visibleVacancies.length / ITEMS_PER_PAGE);
+  const displayedVacancies = visibleVacancies.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  // Пагинация: создаём массив страниц, ограниченный (например, показываем до 5 кнопок вокруг текущей)
+  const getPageNumbers = () => {
+    const delta = 2;
+    const range = [];
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
+        range.push(i);
+      } else if (range[range.length - 1] !== '...') {
+        range.push('...');
+      }
+    }
+    return range;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-200 to-slate-300 py-8 px-4">
@@ -272,6 +332,7 @@ function App() {
             removeSavedQuery={removeSavedQuery}
             initialQuery={query}
             initialExcludeWords={excludeTitleWords}
+            regions={regions}
           />
         </div>
 
@@ -298,7 +359,7 @@ function App() {
             ) : (
               <>
                 <VacancyList
-                  vacancies={visibleVacancies}
+                  vacancies={displayedVacancies}
                   loading={loading}
                   loadingSkills={loadingSkills}
                   favorites={favorites}
@@ -310,18 +371,18 @@ function App() {
                   onSelectVacancy={setSelectedVacancyId}
                   applied={applied}
                   onAppliedToggle={handleAppliedToggle}
+                  isRemoteFilterActive={filters.remoteOnly}
                 />
-                {hasMore && !loading && vacancies.length > 0 && (
-                  <div className="text-center mt-4">
-                    {loadingMore ? <Loader /> : (
-                      <button
-                        onClick={loadMore}
-                        className="bg-indigo-600 text-white px-4 py-2 rounded focus:outline-none"
-                      >
-                        Загрузить ещё
-                      </button>
-                    )}
-                  </div>
+                {totalPages > 1 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    onLoadMore={loadMore}
+                    hasMore={hasMore}
+                    loadingMore={loadingMore}
+                    variant="default"   // можно менять на 'minimal', 'rounded', 'icons', 'animated'
+                  />
                 )}
               </>
             )}

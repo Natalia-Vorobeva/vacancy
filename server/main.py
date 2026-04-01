@@ -1,3 +1,5 @@
+# main.py
+
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import requests
@@ -14,7 +16,6 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 origins = os.getenv("ORIGINS", "http://localhost:5173").split(",")
-print(origins)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -22,15 +23,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def fetch_from_hh(query: str, page: int = 0) -> List[dict]:
-    """Получает одну страницу вакансий с HH.ru."""
+
+def fetch_from_hh(query: str, page: int = 0, area: Optional[int] = None, schedule: Optional[str] = None) -> List[dict]:
     params = {
         'text': query,
-        'area': 1,
         'per_page': 100,
         'page': page,
         'only_with_salary': False,
     }
+    if area is not None:
+        params['area'] = area
+    if schedule is not None:
+        params['schedule'] = schedule
+
     max_retries = 3
     for attempt in range(max_retries):
         try:
@@ -41,7 +46,7 @@ def fetch_from_hh(query: str, page: int = 0) -> List[dict]:
                 for item in data.get('items', []):
                     salary = item.get('salary')
                     experience = item.get('experience', {})
-                    schedule = item.get('schedule', {})
+                    schedule_data = item.get('schedule', {})
                     published_at = item.get('published_at')
                     key_skills = [skill['name'] for skill in item.get('key_skills', [])]
                     vacancies.append({
@@ -50,7 +55,7 @@ def fetch_from_hh(query: str, page: int = 0) -> List[dict]:
                         'company': item['employer']['name'] if item.get('employer') else None,
                         'salary': salary,
                         'experience': experience.get('id'),
-                        'schedule': schedule.get('id'),
+                        'schedule': schedule_data.get('id'),
                         'published_at': published_at,
                         'alternate_url': item.get('alternate_url'),
                         'key_skills': key_skills,
@@ -63,8 +68,8 @@ def fetch_from_hh(query: str, page: int = 0) -> List[dict]:
         time.sleep(2)
     return []
 
+
 def extract_skills_from_description(html_description: str) -> List[str]:
-    """Извлекает навыки из HTML описания вакансии."""
     skill_keywords = [
         'React', 'JavaScript', 'TypeScript', 'Redux', 'Next.js', 'Vue', 'Angular',
         'Node.js', 'Python', 'Django', 'Flask', 'Git', 'HTML', 'CSS', 'Tailwind',
@@ -77,59 +82,61 @@ def extract_skills_from_description(html_description: str) -> List[str]:
             found.append(skill)
     return found
 
+
 def detect_remote_from_description(html_description: str) -> bool:
-    """Определяет удалённую работу из текста описания."""
     text = BeautifulSoup(html_description, 'lxml').get_text().lower()
     return 'удален' in text or 'remote' in text or 'дистанц' in text
 
+
 @app.get("/api/vacancies")
 def get_vacancies(
-    query: str = Query("React разработчик", description="Поисковый запрос"),
+    query: str = Query("", description="Поисковый запрос"),
     salary_only: bool = Query(False, description="Только с указанной зарплатой"),
-    remote_only: bool = Query(False, description="Только удаленка"),
+    remote_only: bool = Query(False, description="Только удаленка"),  # используется для передачи schedule
     exclude_experience_above_3: bool = Query(True, description="Исключить опыт 3-6 и более"),
     days: Optional[int] = Query(7, description="Не старше N дней (0 — все)"),
     page: int = Query(0, ge=0),
     exclude_agency: bool = Query(False, description="Исключить кадровые агентства"),
     exclude_title_words: Optional[str] = Query(None, description="Слова для исключения из названия (через запятую)"),
+    area: Optional[int] = Query(None, description="Выбор региона поиска"),
+    schedule: Optional[str] = Query(None, description="График работы (remote, flexible, fullDay и т.д.)"),
 ):
-    raw_vacancies = fetch_from_hh(query, page)
+    # Если remote_only = true, добавляем schedule=remote (можно также flexible, но для начала только remote)
+    if remote_only and schedule is None:
+        schedule = 'remote'
+    print(schedule)
+
+    if not remote_only and area is not None:
+        raw_vacancies = fetch_from_hh(query, page, area, schedule)
+    else:
+        raw_vacancies = fetch_from_hh(query, page, area=None, schedule=schedule)
+
     filtered = []
     cutoff_date = datetime.now(timezone.utc) - timedelta(days=days) if days and days > 0 else None
 
-    # Разбор слов для исключения
     exclude_words = []
     if exclude_title_words:
         exclude_words = [w.strip().lower() for w in exclude_title_words.split(',') if w.strip()]
-    
+
     for vac in raw_vacancies:
-        # Фильтр по зарплате
         if salary_only and not vac['salary']:
             continue
-        # Фильтр по удалёнке
-        if remote_only and vac['schedule'] != 'remote':
-            continue
-        # Фильтр по опыту
         if exclude_experience_above_3 and vac['experience'] in ('between3And6', 'moreThan6'):
             continue
-        # Фильтр по дате
         if cutoff_date:
             pub_date = datetime.fromisoformat(vac['published_at'].replace('Z', '+00:00')).replace(tzinfo=timezone.utc)
             if pub_date < cutoff_date:
                 continue
-        # Фильтр по кадровым агентствам
         if exclude_agency and vac.get('company') and ('кадровое агентство' in vac['company'].lower() or 'hr' in vac['company'].lower()):
             continue
-
-        # Фильтр по словам в названии
         if exclude_words:
             title_lower = vac['name'].lower()
             if any(word in title_lower for word in exclude_words):
                 continue
-
         filtered.append(vac)
 
     return filtered
+
 
 @app.get("/api/vacancy/{vacancy_id}")
 def get_vacancy_details(vacancy_id: int):

@@ -26,7 +26,8 @@ const VacancyCard = ({
   ratings,
   setRating,
   applied,
-  onAppliedToggle
+  onAppliedToggle,
+  isRemoteFilterActive
 }) => {
   const [hoverRating, setHoverRating] = useState(0);
   const currentRating = ratings[vacancy.id] || 0;
@@ -48,7 +49,7 @@ const VacancyCard = ({
   };
 
   const isApplied = applied.includes(vacancy.id);
-
+  console.log('%cDATA', 'color: purple', vacancy.remote, 'vacancy.schedule')
   return (
     <div
       className={`vacancy-card-image bg-white rounded-lg shadow p-4 hover:shadow-md transition cursor-pointer ${isFavorite ? 'vacancy-card--favorite' : ''}`}
@@ -79,15 +80,17 @@ const VacancyCard = ({
         <div className="text-left md:text-right text-sm text-gray-500">
           <div>{formatDate(vacancy.published_at)}</div>
           <div className="flex items-center mt-2" onClick={(e) => e.stopPropagation()}>
-            <input
-              type="checkbox"
-              checked={isApplied}
-              onChange={() => onAppliedToggle(vacancy.id)}
-              className="custom-checkbox mr-1 flex-shrink-0"
-            />
-            <span className="text-xs text-gray-500 break-words">
-              {isApplied ? 'Отклик отправлен' : 'Отклик не отправлен'}
-            </span>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={isApplied}
+                onChange={() => onAppliedToggle(vacancy.id)}
+                className="w-5 h-5 accent-green-600 cursor-pointer"
+              />
+              <span className="text-sm text-gray-600">
+                {isApplied ? 'Отклик отправлен' : 'Отклик не отправлен'}
+              </span>
+            </label>
           </div>
           <div className="flex items-center gap-1 mt-2 justify-end md:justify-end">
             {[1, 2, 3, 4, 5].map(star => (
@@ -114,7 +117,7 @@ const VacancyCard = ({
           </svg>
           {formatSalary(vacancy.salary)}
         </span>
-        {vacancy.schedule === 'remote' && (
+        {isRemoteFilterActive && (
           <span className="chip-border-left remote bg-gray-100 flex items-center gap-1 text-gray-800 rounded-sm px-3 py-1 border-l-4 border-gray-300">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect x="4" y="5" width="16" height="12" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none" />
