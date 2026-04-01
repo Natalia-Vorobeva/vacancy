@@ -49,7 +49,7 @@ const VacancyCard = ({
   };
 
   const isApplied = applied.includes(vacancy.id);
-  
+
   return (
     <div
       className={`vacancy-card-image bg-white rounded-lg shadow p-4 hover:shadow-md transition cursor-pointer ${isFavorite ? 'vacancy-card--favorite' : ''}`}
@@ -76,7 +76,6 @@ const VacancyCard = ({
           </div>
         </div>
 
-        {/* Правая колонка: дата, чекбокс, звёзды */}
         <div className="text-left md:text-right text-sm text-gray-500">
           <div>{formatDate(vacancy.published_at)}</div>
           <div className="flex items-center mt-2" onClick={(e) => e.stopPropagation()}>

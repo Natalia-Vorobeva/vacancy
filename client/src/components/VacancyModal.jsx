@@ -78,7 +78,6 @@ const VacancyModal = ({ vacancyId, onClose, applied, onAppliedToggle, favorites,
           </button>
         </div>
 
-        {/* Прокручиваемый контент */}
         <div className="p-4 pt-0 overflow-auto">
           {loading && <div className="text-center py-8">Загрузка...</div>}
           {error && (

@@ -102,7 +102,6 @@ const SearchForm = ({
       </style>
 
       <form onSubmit={handleSubmit}>
-        {/* <div className="flex flex-col md:flex-row gap-4 mb-4 relative">*/}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
           <div ref={containerRef} className="flex-1 relative">
             <div className="relative">
@@ -257,7 +256,6 @@ const SearchForm = ({
         </div>
       </form>
 
-      {/* Toast уведомление */}
       {toastMessage && (
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded shadow-lg text-sm z-50 animate-fade-in-up">
           {toastMessage}
