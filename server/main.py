@@ -49,6 +49,8 @@ def fetch_from_hh(query: str, page: int = 0, area: Optional[int] = None, schedul
                     schedule_data = item.get('schedule', {})
                     published_at = item.get('published_at')
                     key_skills = [skill['name'] for skill in item.get('key_skills', [])]
+                    area_info = item.get('area', {})
+                    area_name = area_info.get('name') if area_info else None
                     vacancies.append({
                         'id': item['id'],
                         'name': item['name'],
@@ -59,6 +61,7 @@ def fetch_from_hh(query: str, page: int = 0, area: Optional[int] = None, schedul
                         'published_at': published_at,
                         'alternate_url': item.get('alternate_url'),
                         'key_skills': key_skills,
+                        'area': area_name,
                     })
                 return vacancies
             else:
@@ -152,6 +155,8 @@ def get_vacancy_details(vacancy_id: int):
         all_skills = list(set(key_skills + extra_skills))
         schedule = data.get('schedule', {}).get('id')
         remote = schedule == 'remote'
+        area_info = data.get('area', {})
+        area_name = area_info.get('name') if area_info else None
         if not remote and schedule is None:
             remote = detect_remote_from_description(description)
         return {
@@ -168,6 +173,7 @@ def get_vacancy_details(vacancy_id: int):
             'extra_skills': extra_skills,
             'all_skills': all_skills,
             'description': description,
+            'area': area_name,
         }
     except Exception as e:
         return {"error": str(e)}
