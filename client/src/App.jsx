@@ -22,11 +22,11 @@ function App() {
     const saved = localStorage.getItem('filters');
     return saved ? JSON.parse(saved) : {
       salaryOnly: false,
-      remoteOnly: false,
-      excludeExperienceAbove3: false,
+      remoteOnly: true,
+      excludeExperienceAbove3: true,
       days: 0,
-      excludeAgency: false,
-      area: 2, 
+      excludeAgency: true,
+      area: 2,
     };
   });
 
@@ -348,7 +348,7 @@ function App() {
                   onAppliedToggle={handleAppliedToggle}
                   isRemoteFilterActive={filters.remoteOnly}
                 />
-                {totalPages > 1 && (
+                {!loading && visibleVacancies.length > 0 && totalPages > 1 && (
                   <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
@@ -356,7 +356,7 @@ function App() {
                     onLoadMore={loadMore}
                     hasMore={hasMore}
                     loadingMore={loadingMore}
-                    variant="default" 
+                    variant="default"
                   />
                 )}
               </>

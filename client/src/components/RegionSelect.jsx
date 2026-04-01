@@ -31,9 +31,8 @@ const RegionSelect = ({ regions, value, onChange, disabled = false }) => {
     <div ref={containerRef} className="relative w-full">
       <div
         onClick={() => !disabled && setOpen(!open)}
-        className={`flex items-center justify-between border border-gray-300 rounded p-2 bg-white cursor-pointer ${
-          disabled ? 'bg-gray-100 cursor-not-allowed' : ''
-        }`}
+        className={`flex items-center justify-between border border-gray-300 rounded p-2 bg-white cursor-pointer ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''
+          }`}
       >
         <span className={!selectedRegion ? 'text-gray-400' : ''}>
           {selectedRegion ? selectedRegion.name : 'Выберите регион'}
@@ -56,7 +55,7 @@ const RegionSelect = ({ regions, value, onChange, disabled = false }) => {
               placeholder="Поиск региона..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full border border-gray-300 rounded p-1 text-sm"
+              className="w-full border border-gray-300 rounded p-1 text-sm focus:ring-2 focus:ring-indigo-300 focus:border-transparent"
               autoFocus
             />
           </div>

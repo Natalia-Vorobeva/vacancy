@@ -78,7 +78,6 @@ const Pagination = ({
 
   return (
     <div className="flex items-center justify-center gap-2 flex-wrap">
-      {/* Предыдущая */}
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
@@ -87,7 +86,6 @@ const Pagination = ({
         {variant === 'icons' ? '<' : '←'}
       </button>
 
-      {/* Номера страниц */}
       {pageNumbers.map((num, idx) => (
         <button
           key={idx}
@@ -99,7 +97,6 @@ const Pagination = ({
         </button>
       ))}
 
-      {/* Следующая */}
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
@@ -108,7 +105,6 @@ const Pagination = ({
         {variant === 'icons' ? '>' : '→'}
       </button>
 
-      {/* Кнопка "Загрузить ещё" */}
       {hasMore && onLoadMore && (
         <button
           onClick={onLoadMore}

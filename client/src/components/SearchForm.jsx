@@ -187,7 +187,7 @@ const SearchForm = ({
           </div>
         </div>
 
-        <div className="mb-4">
+        <div className="mb-4 mt-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-sm">
             <span className="text-gray-700 break-words">
               Исключить слова в названии (через запятую):
